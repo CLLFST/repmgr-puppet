@@ -159,28 +159,29 @@ function install_module_requirements(){
 	bundle install --gemfile $PUPPET_MODULE/Gemfile
 }
 
+# Install vagrant and virtualbox
+function install_vagrant_virtualbox(){
+	echo "[INFO] Installing vagrant .."
+	sudo apt-get install -y vagrant >> /dev/null
+	echo "[INFO] Installing Virtualbox"
+	sudo apt-get install -y virtualbox >> /dev/null
+}
+
 # TODO: determine required packages on openSuse and CentOS distros.
 function install_requirements(){
+	read -p "You need to have a Debian like OS. Do you want to continue[y/n]" -n 1 -r
+	if [[ $REPLY =~ ^[Nn]$ ]]
+	then
+		exit 1
+	fi
+	# installing vagrant and virtualbox
+	which vagrant >> /dev/null || install_vagrant_virtualbox
+
+	echo "[INFO] Install Linux required packages.."
+	sudo apt-get install -y gcc g++ ruby-dev libxml2-dev libxslt1-dev zlib1g-dev > /dev/null
+
 	# Install the correct ruby version
 	get_system_ruby_version || install_ruby
-	# Install lsb-release with the appropriate package manage
-	# openSuse
-	# which zypper && zypper install lsb-release
-	# RedHat based distros : CentOS, Fedora
-	which yum > /dev/null && yum install lsb-release > /dev/null
-	# Debian based ditros : Debian, Ubuntu, etc
-	which apt-get > /dev/null && apt-get install -y lsb-release > /dev/null
-	LINUX_DISTRO=$(lsb_release -si)
-	echo "[INFO] Install Linux required packages.."
-	case "$LINUX_DISTRO" in
-		"Debian"|"Ubuntu") sudo apt-get install -y gcc g++ ruby-dev libxml2-dev \
-			libxslt1-dev zlib1g-dev > /dev/null;;
-		"Fedora") sudo yum install make gcc gcc-c++ libxml2-devel libxslt-devel \
-			ruby-devel > /dev/null;;
-		*) echo "[ERROR] Unsupported Linux distribution '$LINUX_DISTRO' !"
-		   exit 1
-		   ;;
-	esac
 	# Install bundler using ruby gem package installer.
 	echo "[INFO] Check if bundler is installed.."
 	which bundle > /dev/null || sudo gem install bundler
